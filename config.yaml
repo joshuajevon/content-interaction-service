@@ -1,0 +1,12 @@
+server:
+  port: 8081
+
+db:
+  host: aws-0-ap-southeast-1.pooler.supabase.com
+  port: 5432
+  user: postgres.iqejnxlcibjlwofjdjcc
+  password: 9csX26xyIrxPVt88
+  dbname: postgres
+  sslmode: require
+  pool_mode: session
+  timezone: Asia/Bangkok
