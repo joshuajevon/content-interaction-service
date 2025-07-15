@@ -21,6 +21,20 @@ func NewPostHttp(postUc posts.PostUseCase) *PostHttp{
 		postUc: postUc,
 	}
 }
+
+func (handler *PostHttp) ViewAllPost(c *gin.Context) {
+    ctx := c.Request.Context()
+
+    result, err := handler.postUc.ViewAllPost(ctx)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
+}
+
 func (handler *PostHttp) CreatePost(c *gin.Context) {
     ctx := c.Request.Context()
     var form requests.CreatePostRequest
@@ -46,7 +60,7 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
 
     for _, file := range files {
         timestamp := time.Now().Format("20060102150405") // yyyyMMddHHmmss
-        savePath := "uploads/" + timestamp + "_" + file.Filename
+        savePath := "storage/post/" + timestamp + "_" + file.Filename
         if err := c.SaveUploadedFile(file, savePath); err != nil {
             log.Printf("failed to save image %s: %v", file.Filename, err)
             c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: "File upload error"})

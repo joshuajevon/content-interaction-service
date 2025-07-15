@@ -21,18 +21,29 @@ func NewPostRepository(db infrastructures.Database) posts.PostRepository {
 	}
 }
 
+func (p PostRepository) FindAll(ctx context.Context) ([]*entities.Post, error) {
+	var posts []*entities.Post
+
+	result := p.db.GetInstance().WithContext(ctx).Order("created_at DESC").Find(&posts)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return posts, nil
+}
+
 func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*entities.Post, error) {
 	postModel := &entities.Post{
-		ID: uuid.New(),
-		UserID: post.UserID,
+		ID:        uuid.New(),
+		UserID:    post.UserID,
 		ImageURLs: pq.StringArray(post.ImageURLs),
-		Caption: post.Caption,
-		Tags: pq.StringArray(post.Tags),
+		Caption:   post.Caption,
+		Tags:      pq.StringArray(post.Tags),
 		CreatedAt: time.Now(),
 	}
 
 	result := p.db.GetInstance().WithContext(ctx).Create(postModel)
-	
+
 	if result.Error != nil {
 		return nil, result.Error
 	}
