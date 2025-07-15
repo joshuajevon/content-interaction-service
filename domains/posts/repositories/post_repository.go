@@ -21,6 +21,18 @@ func NewPostRepository(db infrastructures.Database) posts.PostRepository {
 	}
 }
 
+func (p PostRepository) FindById(ctx context.Context, id string) (*entities.Post, error) {
+	var post *entities.Post
+
+	result := p.db.GetInstance().WithContext(ctx).Where("id = ?", id).First(&post)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return post, nil
+}
+
 func (p PostRepository) FindAllByUserId(ctx context.Context, userId string) ([]*entities.Post, error) {
 	var posts []*entities.Post
 

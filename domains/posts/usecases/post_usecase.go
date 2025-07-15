@@ -22,20 +22,38 @@ func NewPostUseCase(postRepo posts.PostRepository) posts.PostUseCase {
 	}
 }
 
+func (p PostUseCase) ViewPostById(ctx context.Context, id string) (*responses.PostResponse, error) {
+    post, err := p.postRepository.FindById(ctx, id)
+
+    if err != nil {
+        return nil, err
+    }
+
+    return &responses.PostResponse{
+        ID: post.ID,
+        UserID: post.UserID,
+        ImageURLs: post.ImageURLs,
+        Caption: post.Caption,
+        Tags: post.Tags,
+        CreatedAt: post.CreatedAt,
+        UpdatedAt: post.UpdatedAt,
+    }, nil
+}
+
 func (p PostUseCase) ViewAllPostByUserId(ctx context.Context) ([]*responses.PostResponse, error) {
-    user, err := util.GetAuthUser(ctx)
-    
-    if err != nil {
-        return nil, err
-    }
-    
-    posts, err := p.postRepository.FindAllByUserId(ctx, user.UserId)
+	user, err := util.GetAuthUser(ctx)
 
-    if err != nil {
-        return nil, err
-    }
+	if err != nil {
+		return nil, err
+	}
 
-    var responseList []*responses.PostResponse
+	posts, err := p.postRepository.FindAllByUserId(ctx, user.UserId)
+
+	if err != nil {
+		return nil, err
+	}
+
+	var responseList []*responses.PostResponse
 	for _, post := range posts {
 		response := &responses.PostResponse{
 			ID:        post.ID,
