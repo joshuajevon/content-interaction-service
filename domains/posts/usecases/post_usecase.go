@@ -5,6 +5,7 @@ import (
 	"bootcamp-content-interaction-service/domains/posts/entities"
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/domains/posts/models/responses"
+	"bootcamp-content-interaction-service/shared/util"
 
 	"context"
 
@@ -21,26 +22,55 @@ func NewPostUseCase(postRepo posts.PostRepository) posts.PostUseCase {
 	}
 }
 
-func (p PostUseCase) ViewAllPost(ctx context.Context) ([]*responses.PostResponse, error) {
-    posts, err := p.postRepository.FindAll(ctx)
+func (p PostUseCase) ViewAllPostByUserId(ctx context.Context) ([]*responses.PostResponse, error) {
+    user, err := util.GetAuthUser(ctx)
+    
+    if err != nil {
+        return nil, err
+    }
+    
+    posts, err := p.postRepository.FindAllByUserId(ctx, user.UserId)
+
     if err != nil {
         return nil, err
     }
 
     var responseList []*responses.PostResponse
-    for _, post := range posts {
-        response := &responses.PostResponse{
-            ID: post.ID,
-            UserID: post.UserID,
-            ImageURLs: post.ImageURLs,
-            Caption: post.Caption,
-            Tags: post.Tags,
-            CreatedAt: post.CreatedAt,
-            UpdatedAt: post.UpdatedAt,
-        }
-        responseList = append(responseList, response)
-    }
-    return responseList, nil
+	for _, post := range posts {
+		response := &responses.PostResponse{
+			ID:        post.ID,
+			UserID:    post.UserID,
+			ImageURLs: post.ImageURLs,
+			Caption:   post.Caption,
+			Tags:      post.Tags,
+			CreatedAt: post.CreatedAt,
+			UpdatedAt: post.UpdatedAt,
+		}
+		responseList = append(responseList, response)
+	}
+	return responseList, nil
+}
+
+func (p PostUseCase) ViewAllPost(ctx context.Context) ([]*responses.PostResponse, error) {
+	posts, err := p.postRepository.FindAll(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseList []*responses.PostResponse
+	for _, post := range posts {
+		response := &responses.PostResponse{
+			ID:        post.ID,
+			UserID:    post.UserID,
+			ImageURLs: post.ImageURLs,
+			Caption:   post.Caption,
+			Tags:      post.Tags,
+			CreatedAt: post.CreatedAt,
+			UpdatedAt: post.UpdatedAt,
+		}
+		responseList = append(responseList, response)
+	}
+	return responseList, nil
 }
 
 func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePostRequest) (*responses.PostResponse, error) {

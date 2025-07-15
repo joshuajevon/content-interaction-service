@@ -22,6 +22,19 @@ func NewPostHttp(postUc posts.PostUseCase) *PostHttp{
 	}
 }
 
+func (handler *PostHttp) ViewAllPostByUserId(c *gin.Context) {
+    ctx := c.Request.Context()
+
+    result, err := handler.postUc.ViewAllPostByUserId(ctx)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
+}
+
 func (handler *PostHttp) ViewAllPost(c *gin.Context) {
     ctx := c.Request.Context()
 

@@ -10,5 +10,6 @@ func RegisterServer(router *gin.Engine) {
 	{
 		post.POST("/create", PostHttp.CreatePost)
 		post.GET("/view", PostHttp.ViewAllPost)
+		post.GET("/view/user", PostHttp.ViewAllPostByUserId)
 	}
 }
