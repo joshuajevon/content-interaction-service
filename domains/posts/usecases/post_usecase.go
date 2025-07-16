@@ -5,9 +5,10 @@ import (
 	"bootcamp-content-interaction-service/domains/posts/entities"
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/domains/posts/models/responses"
-	"bootcamp-content-interaction-service/shared/util"
 	sharedResponse "bootcamp-content-interaction-service/shared/models/responses"
+	"bootcamp-content-interaction-service/shared/util"
 	"fmt"
+	"os"
 
 	"context"
 
@@ -25,30 +26,40 @@ func NewPostUseCase(postRepo posts.PostRepository) posts.PostUseCase {
 }
 
 func (p PostUseCase) DeletePost(ctx context.Context, id string) (*sharedResponse.BasicResponse, error) {
-	user, err := util.GetAuthUser(ctx)
+    user, err := util.GetAuthUser(ctx)
+    if err != nil {
+        return nil, err
+    }
 
-	if err != nil {
-		return nil, err
-	}
+    post, err := p.postRepository.FindById(ctx, id)
+    if err != nil {
+        return nil, err
+    }
 
- 	post, err := p.postRepository.FindById(ctx, id);
-	if err != nil {
-		return nil, err
-	}
-
-	if post.UserID != uuid.MustParse(user.UserId) {
+    if post.UserID != uuid.MustParse(user.UserId) {
         return nil, fmt.Errorf("unauthorized: cannot delete someone else's post")
     }
 
-   	p.postRepository.DeletePost(ctx, id);
+    // 🗑️ Delete image files from disk
+    for _, imagePath := range post.ImageURLs {
+        if err := os.Remove(imagePath); err != nil {
+            // Optional: Log error or continue silently
+            fmt.Printf("Failed to remove image %s: %v\n", imagePath, err)
+        }
+    }
 
-	return &sharedResponse.BasicResponse{
-		Data: struct {
-			Message string
-		}{
-			Message: "Post with " + id + " deleted",
-		},
-	}, nil
+    // 🧼 Delete post from database
+    if err := p.postRepository.DeletePost(ctx, id); err != nil {
+        return nil, err
+    }
+
+    return &sharedResponse.BasicResponse{
+        Data: struct {
+            Message string
+        }{
+            Message: "Post with " + id + " deleted along with images",
+        },
+    }, nil
 }
 
 func (p PostUseCase) ViewPostById(ctx context.Context, id string) (*responses.PostResponse, error) {
