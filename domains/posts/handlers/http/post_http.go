@@ -22,6 +22,21 @@ func NewPostHttp(postUc posts.PostUseCase) *PostHttp{
 	}
 }
 
+func (handler *PostHttp) DeletePost(c *gin.Context) {
+    ctx:= c.Request.Context()
+
+    postId := c.Param("id")
+    
+    result, err := handler.postUc.DeletePost(ctx, postId)
+
+     if err != nil {
+        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
+}
+
 func (handler *PostHttp) ViewPostById(c *gin.Context) {
     ctx := c.Request.Context()
     postID := c.Param("id")

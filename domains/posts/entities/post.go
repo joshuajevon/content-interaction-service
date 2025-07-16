@@ -6,7 +6,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"gorm.io/gorm"
 )
 
 type Post struct {
@@ -18,5 +17,4 @@ type Post struct {
     Tags       pq.StringArray `gorm:"type:text[]"`
     CreatedAt  time.Time      `gorm:"type:timestamp"`
     UpdatedAt  time.Time      `gorm:"type:timestamp"`
-    DeletedAt  gorm.DeletedAt `gorm:"index"`
 }

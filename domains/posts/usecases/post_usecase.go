@@ -6,6 +6,8 @@ import (
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/domains/posts/models/responses"
 	"bootcamp-content-interaction-service/shared/util"
+	sharedResponse "bootcamp-content-interaction-service/shared/models/responses"
+	"fmt"
 
 	"context"
 
@@ -22,22 +24,49 @@ func NewPostUseCase(postRepo posts.PostRepository) posts.PostUseCase {
 	}
 }
 
-func (p PostUseCase) ViewPostById(ctx context.Context, id string) (*responses.PostResponse, error) {
-    post, err := p.postRepository.FindById(ctx, id)
+func (p PostUseCase) DeletePost(ctx context.Context, id string) (*sharedResponse.BasicResponse, error) {
+	user, err := util.GetAuthUser(ctx)
 
-    if err != nil {
-        return nil, err
+	if err != nil {
+		return nil, err
+	}
+
+ 	post, err := p.postRepository.FindById(ctx, id);
+	if err != nil {
+		return nil, err
+	}
+
+	if post.UserID != uuid.MustParse(user.UserId) {
+        return nil, fmt.Errorf("unauthorized: cannot delete someone else's post")
     }
 
-    return &responses.PostResponse{
-        ID: post.ID,
-        UserID: post.UserID,
-        ImageURLs: post.ImageURLs,
-        Caption: post.Caption,
-        Tags: post.Tags,
-        CreatedAt: post.CreatedAt,
-        UpdatedAt: post.UpdatedAt,
-    }, nil
+   	p.postRepository.DeletePost(ctx, id);
+
+	return &sharedResponse.BasicResponse{
+		Data: struct {
+			Message string
+		}{
+			Message: "Post with " + id + " deleted",
+		},
+	}, nil
+}
+
+func (p PostUseCase) ViewPostById(ctx context.Context, id string) (*responses.PostResponse, error) {
+	post, err := p.postRepository.FindById(ctx, id)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &responses.PostResponse{
+		ID:        post.ID,
+		UserID:    post.UserID,
+		ImageURLs: post.ImageURLs,
+		Caption:   post.Caption,
+		Tags:      post.Tags,
+		CreatedAt: post.CreatedAt,
+		UpdatedAt: post.UpdatedAt,
+	}, nil
 }
 
 func (p PostUseCase) ViewAllPostByUserId(ctx context.Context) ([]*responses.PostResponse, error) {
@@ -92,8 +121,14 @@ func (p PostUseCase) ViewAllPost(ctx context.Context) ([]*responses.PostResponse
 }
 
 func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePostRequest) (*responses.PostResponse, error) {
+	user, err := util.GetAuthUser(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	
 	postObject := &entities.Post{
-		UserID:    uuid.MustParse(request.UserID),
+		UserID:    uuid.MustParse(user.UserId),
 		ImageURLs: request.ImageURLs,
 		Caption:   request.Caption,
 		Tags:      request.Tags,

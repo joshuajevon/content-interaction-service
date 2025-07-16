@@ -5,6 +5,7 @@ import (
 	"bootcamp-content-interaction-service/domains/posts/entities"
 	"bootcamp-content-interaction-service/infrastructures"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -19,6 +20,25 @@ func NewPostRepository(db infrastructures.Database) posts.PostRepository {
 	return PostRepository{
 		db: db,
 	}
+}
+
+func (p PostRepository) DeletePost(ctx context.Context, id string) error {
+    parsedID, err := uuid.Parse(id)
+    if err != nil {
+        return fmt.Errorf("invalid UUID format: %w", err)
+    }
+
+    result := p.db.GetInstance().WithContext(ctx).Where("id = ?", parsedID).Delete(&entities.Post{})
+
+    if result.Error != nil {
+        return result.Error
+    }
+	
+    if result.RowsAffected == 0 {
+        return fmt.Errorf("no post found with ID: %s", id)
+    }
+
+    return nil
 }
 
 func (p PostRepository) FindById(ctx context.Context, id string) (*entities.Post, error) {
