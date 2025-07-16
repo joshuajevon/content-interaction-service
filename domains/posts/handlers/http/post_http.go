@@ -22,6 +22,40 @@ func NewPostHttp(postUc posts.PostUseCase) *PostHttp{
 	}
 }
 
+func (handler *PostHttp) UpdatePost(c *gin.Context) {
+    ctx := c.Request.Context()
+    postID := c.Param("id")
+
+    var form requests.UpdatePostRequest
+    if err := c.ShouldBind(&form); err != nil {
+        c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    formData, err := c.MultipartForm()
+    if err == nil {
+        var imageURLs []string
+        for _, file := range formData.File["images"] {
+            timestamp := time.Now().Format("20060102150405")
+            savePath := "storage/post/" + timestamp + "_" + file.Filename
+            if err := c.SaveUploadedFile(file, savePath); err != nil {
+                c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: "File upload error: " + err.Error()})
+                return
+            }
+            imageURLs = append(imageURLs, savePath)
+        }
+        form.ImageURLs = imageURLs
+    }
+
+    result, err := handler.postUc.UpdatePost(ctx, postID, &form)
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
+}
+
 func (handler *PostHttp) DeletePost(c *gin.Context) {
     ctx:= c.Request.Context()
 

@@ -19,6 +19,7 @@ func RegisterServer(router *gin.Engine) {
 			post.POST("/create", PostHttp.CreatePost)
 			post.GET("/view/user", PostHttp.ViewAllPostByUserId)
 			post.DELETE("/delete/:id", PostHttp.DeletePost)
+			post.PATCH("/update/:id", PostHttp.UpdatePost)
 		}
 
 	}

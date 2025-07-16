@@ -9,6 +9,7 @@ import (
 	"bootcamp-content-interaction-service/shared/util"
 	"fmt"
 	"os"
+	"time"
 
 	"context"
 
@@ -23,6 +24,51 @@ func NewPostUseCase(postRepo posts.PostRepository) posts.PostUseCase {
     return PostUseCase{
         postRepository: postRepo,
 	}
+}
+
+func (p PostUseCase) UpdatePost(ctx context.Context, postID string, request *requests.UpdatePostRequest) (*responses.PostResponse, error) {
+    existing, err := p.postRepository.FindById(ctx, postID)
+    if err != nil {
+        return nil, err
+    }
+
+    user, err := util.GetAuthUser(ctx)
+    if err != nil {
+        return nil, err
+    }
+
+    if existing.UserID != uuid.MustParse(user.UserId) {
+        return nil, fmt.Errorf("unauthorized: cannot update someone else's post")
+    }
+
+    if request.Caption != "" {
+        existing.Caption = request.Caption
+    }
+    if request.Tags != nil {
+        existing.Tags = request.Tags
+    }
+    if request.ImageURLs != nil {
+        for _, old := range existing.ImageURLs {
+            _ = os.Remove(old)
+        }
+        existing.ImageURLs = request.ImageURLs
+    }
+	
+	existing.UpdatedAt = time.Now()
+
+    updated, err := p.postRepository.UpdatePost(ctx, existing)
+    if err != nil {
+        return nil, err
+    }
+
+    return &responses.PostResponse{
+        ID:        updated.ID,
+        UserID:    updated.UserID,
+        Caption:   updated.Caption,
+        Tags:      updated.Tags,
+        ImageURLs: updated.ImageURLs,
+        UpdatedAt: updated.UpdatedAt,
+    }, nil
 }
 
 func (p PostUseCase) DeletePost(ctx context.Context, id string) (*sharedResponse.BasicResponse, error) {
@@ -40,15 +86,12 @@ func (p PostUseCase) DeletePost(ctx context.Context, id string) (*sharedResponse
         return nil, fmt.Errorf("unauthorized: cannot delete someone else's post")
     }
 
-    // 🗑️ Delete image files from disk
     for _, imagePath := range post.ImageURLs {
         if err := os.Remove(imagePath); err != nil {
-            // Optional: Log error or continue silently
             fmt.Printf("Failed to remove image %s: %v\n", imagePath, err)
         }
     }
 
-    // 🧼 Delete post from database
     if err := p.postRepository.DeletePost(ctx, id); err != nil {
         return nil, err
     }
@@ -157,6 +200,5 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 		Caption:   savedPost.Caption,
 		Tags:      savedPost.Tags,
 		CreatedAt: savedPost.CreatedAt,
-		UpdatedAt: savedPost.UpdatedAt,
 	}, nil
 }

@@ -22,6 +22,14 @@ func NewPostRepository(db infrastructures.Database) posts.PostRepository {
 	}
 }
 
+func (p PostRepository) UpdatePost(ctx context.Context, post *entities.Post) (*entities.Post, error) {
+    result := p.db.GetInstance().WithContext(ctx).Save(post)
+    if result.Error != nil {
+        return nil, result.Error
+    }
+    return post, nil
+}
+
 func (p PostRepository) DeletePost(ctx context.Context, id string) error {
     parsedID, err := uuid.Parse(id)
     if err != nil {
@@ -33,7 +41,7 @@ func (p PostRepository) DeletePost(ctx context.Context, id string) error {
     if result.Error != nil {
         return result.Error
     }
-	
+
     if result.RowsAffected == 0 {
         return fmt.Errorf("no post found with ID: %s", id)
     }
