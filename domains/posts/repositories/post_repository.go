@@ -6,10 +6,11 @@ import (
 	"bootcamp-content-interaction-service/infrastructures"
 	"context"
 	"fmt"
-	"time"
+	// "time"
 
 	"github.com/google/uuid"
-	"github.com/lib/pq"
+	// "github.com/lib/pq"
+	"gorm.io/gorm"
 )
 
 type PostRepository struct {
@@ -82,21 +83,38 @@ func (p PostRepository) FindAll(ctx context.Context) ([]*entities.Post, error) {
 	return posts, nil
 }
 
+// func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*entities.Post, error) {
+// 	postModel := &entities.Post{
+// 		ID:        uuid.New(),
+// 		UserID:    post.UserID,
+// 		ImageURLs: pq.StringArray(post.ImageURLs),
+// 		Caption:   post.Caption,
+// 		Tags:      pq.StringArray(post.Tags),
+// 		CreatedAt: time.Now(),
+// 	}
+
+// 	result := p.db.GetInstance().WithContext(ctx).Create(postModel)
+
+// 	if result.Error != nil {
+// 		return nil, result.Error
+// 	}
+
+// 	return postModel, nil
+// }
+
+
 func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*entities.Post, error) {
-	postModel := &entities.Post{
-		ID:        uuid.New(),
-		UserID:    post.UserID,
-		ImageURLs: pq.StringArray(post.ImageURLs),
-		Caption:   post.Caption,
-		Tags:      pq.StringArray(post.Tags),
-		CreatedAt: time.Now(),
-	}
+    err := p.db.GetInstance().WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+        result := tx.Create(post)
+        if result.Error != nil {
+            return result.Error
+        }
+        return nil
+    })
 
-	result := p.db.GetInstance().WithContext(ctx).Create(postModel)
+    if err != nil {
+        return nil, err
+    }
 
-	if result.Error != nil {
-		return nil, result.Error
-	}
-
-	return postModel, nil
+    return post, nil
 }

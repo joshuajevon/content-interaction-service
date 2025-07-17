@@ -4,8 +4,9 @@ import (
 	"bootcamp-content-interaction-service/domains/posts"
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/shared/models/responses"
-	"log"
+	// "log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -110,17 +111,65 @@ func (handler *PostHttp) ViewAllPost(c *gin.Context) {
     c.JSON(http.StatusOK, result)
 }
 
+// func (handler *PostHttp) CreatePost(c *gin.Context) {
+//     ctx := c.Request.Context()
+//     var form requests.CreatePostRequest
+
+//     // Bind non-file fields
+//     if err := c.ShouldBind(&form); err != nil {
+//         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: err.Error()})
+//         return
+//     }
+
+//     // Handle uploaded files
+//     formData, err := c.MultipartForm()
+//     if err != nil {
+//         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: "Invalid multipart form: " + err.Error()})
+//         return
+//     }
+
+//     files := formData.File["images"]
+//     if len(files) == 0 {
+//         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: "At least one image is required"})
+//         return
+//     }
+
+//     for _, file := range files {
+//         timestamp := time.Now().Format("20060102150405") // yyyyMMddHHmmss
+//         savePath := "storage/post/" + timestamp + "_" + file.Filename
+//         if err := c.SaveUploadedFile(file, savePath); err != nil {
+//             log.Printf("failed to save image %s: %v", file.Filename, err)
+//             c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: "File upload error"})
+//             return
+//         }
+//         form.ImageURLs = append(form.ImageURLs, savePath)
+//     }
+
+//     // Optional validation
+//     validate := validator.New()
+//     if err := validate.StructCtx(ctx, form); err != nil {
+//         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: err.Error()})
+//         return
+//     }
+
+//     result, err := handler.postUc.CreatePost(ctx, &form)
+//     if err != nil {
+//         c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+//         return
+//     }
+
+//     c.JSON(http.StatusCreated, result)
+// }
+
 func (handler *PostHttp) CreatePost(c *gin.Context) {
     ctx := c.Request.Context()
     var form requests.CreatePostRequest
 
-    // Bind non-file fields
     if err := c.ShouldBind(&form); err != nil {
         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: err.Error()})
         return
     }
 
-    // Handle uploaded files
     formData, err := c.MultipartForm()
     if err != nil {
         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: "Invalid multipart form: " + err.Error()})
@@ -133,26 +182,39 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
         return
     }
 
+    var imagePaths []string
     for _, file := range files {
-        timestamp := time.Now().Format("20060102150405") // yyyyMMddHHmmss
+        timestamp := time.Now().Format("20060102150405")
         savePath := "storage/post/" + timestamp + "_" + file.Filename
         if err := c.SaveUploadedFile(file, savePath); err != nil {
-            log.Printf("failed to save image %s: %v", file.Filename, err)
-            c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: "File upload error"})
+            // Roll back any previously saved files
+            for _, path := range imagePaths {
+                _ = os.Remove(path)
+            }
+            c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: "Failed to save image: " + err.Error()})
             return
         }
-        form.ImageURLs = append(form.ImageURLs, savePath)
+        imagePaths = append(imagePaths, savePath)
     }
 
-    // Optional validation
+    form.ImageURLs = imagePaths
+
     validate := validator.New()
     if err := validate.StructCtx(ctx, form); err != nil {
+        // Cleanup saved images
+        for _, path := range imagePaths {
+            _ = os.Remove(path)
+        }
         c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: err.Error()})
         return
     }
 
     result, err := handler.postUc.CreatePost(ctx, &form)
     if err != nil {
+        // Cleanup saved images
+        for _, path := range imagePaths {
+            _ = os.Remove(path)
+        }
         c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
         return
     }
