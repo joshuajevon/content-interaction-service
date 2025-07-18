@@ -8,6 +8,6 @@ import (
 func RegisterServer(router *gin.Engine) {
 	post := router.Group("/posts")
 	{
-		post.POST("/view/:id/likes", LikesHttp.LikePost)
+		post.POST("/view/likes/:id", LikesHttp.LikePost)
 	}
 }
