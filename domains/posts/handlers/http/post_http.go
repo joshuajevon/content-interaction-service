@@ -4,6 +4,7 @@ import (
 	"bootcamp-content-interaction-service/domains/posts"
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/shared/models/responses"
+
 	// "log"
 	"net/http"
 	"os"
@@ -220,4 +221,19 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
     }
 
     c.JSON(http.StatusCreated, result)
+}
+
+func (handler *PostHttp) ViewPersonalFeed(c * gin.Context) {
+    ctx := c.Request.Context()
+
+    userId := c.Param("id")
+
+    result, err := handler.postUc.ViewPostByUserId(ctx, userId)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
 }

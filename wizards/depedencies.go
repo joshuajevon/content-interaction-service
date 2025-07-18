@@ -12,6 +12,7 @@ var (
 	Config             = config.GetConfig()
 	PostgresDatabase   = infrastructures.NewPostgresDatabase(Config)
 	PostRepository = postRepo.NewPostRepository(PostgresDatabase)
-	PostUseCase = postUc.NewPostUseCase(PostRepository)
+	UserGraphService = postHttp.NewUserGraphHTTP(Config.UserGraphBaseURL)
+	PostUseCase = postUc.NewPostUseCase(PostRepository, UserGraphService)
 	PostHttp = postHttp.NewPostHttp(PostUseCase)
 )
