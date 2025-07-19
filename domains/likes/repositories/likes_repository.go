@@ -35,7 +35,7 @@ func (repo *LikesRepository) LikePost(ctx context.Context, userId, postId string
 
 	err = repo.db.GetInstance().WithContext(ctx).
 		Unscoped().
-		Where("user_id=? AND post_id", userId, postId).
+		Where("user_id=? AND post_id=?", userId, postId).
 		First(&likes).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
