@@ -25,8 +25,8 @@ func (uc *CommentsUseCase) CreateComment(ctx context.Context, userId, postId, ms
 	return nil
 }
 
-func (uc *CommentsUseCase) UpdateComment(ctx context.Context, userId, postId, msg string, replyId *string) error {
-	err := uc.repo.UpdateComment(ctx, userId, postId, msg, nil)
+func (uc *CommentsUseCase) UpdateComment(ctx context.Context, id, userId, msg string) error {
+	err := uc.repo.UpdateComment(ctx, id, userId, msg)
 	if err != nil {
 		return err
 	}
@@ -34,8 +34,8 @@ func (uc *CommentsUseCase) UpdateComment(ctx context.Context, userId, postId, ms
 	return nil
 }
 
-func (uc *CommentsUseCase) ReplyComment(ctx context.Context, userId, postId, replyId, msg string) error {
-	err := uc.repo.ReplyComment(ctx, userId, postId, replyId, msg)
+func (uc *CommentsUseCase) ReplyComment(ctx context.Context, id, userId, postId, msg string) error {
+	err := uc.repo.ReplyComment(ctx, id, userId, postId, msg)
 	if err != nil {
 		return err
 	}

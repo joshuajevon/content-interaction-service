@@ -4,6 +4,7 @@ import (
 	"bootcamp-content-interaction-service/domains/likes"
 	"bootcamp-content-interaction-service/domains/users/models/dto"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -25,10 +26,11 @@ func (h *LikesHttp) LikePost(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
 	userId := authUser.UserId
-	postId := c.Param("id")
+	postId := strings.TrimPrefix(c.Param("id"), ":")
 
 	err := h.uc.LikePost(ctx, userId, postId)
 
@@ -38,6 +40,7 @@ func (h *LikesHttp) LikePost(c *gin.Context) {
 				"error": err,
 			},
 		)
+		return
 	}
 
 	c.JSON(http.StatusOK,
@@ -56,10 +59,11 @@ func (h *LikesHttp) DislikePost(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
 	userId := authUser.UserId
-	postId := c.Param("id")
+	postId := strings.TrimPrefix(c.Param("id"), ":")
 
 	err := h.uc.DislikePost(ctx, userId, postId)
 
@@ -69,6 +73,7 @@ func (h *LikesHttp) DislikePost(c *gin.Context) {
 				"error": err,
 			},
 		)
+		return
 	}
 
 	c.JSON(http.StatusOK,

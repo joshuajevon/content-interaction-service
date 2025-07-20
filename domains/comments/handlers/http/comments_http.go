@@ -6,6 +6,7 @@ import (
 	"bootcamp-content-interaction-service/domains/comments/models/response"
 	"bootcamp-content-interaction-service/domains/users/models/dto"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -23,13 +24,14 @@ func (h *CommentsHttp) CreateComment(c *gin.Context) {
 	var req request.CommentRequest
 	ctx := c.Request.Context()
 
-	err := c.ShouldBindBodyWithJSON(req)
+	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest,
 			gin.H{
 				"error": "Msg Null",
 			},
 		)
+		return
 	}
 
 	authUser, ok := c.Request.Context().Value("user").(*dto.AuthUserDto)
@@ -39,10 +41,11 @@ func (h *CommentsHttp) CreateComment(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
 	userId := authUser.UserId
-	postId := c.Param("id")
+	postId := strings.TrimPrefix(c.Param("id"), ":")
 
 	err = h.uc.CreateComment(ctx, userId, postId, req.Msg, nil)
 
@@ -52,6 +55,7 @@ func (h *CommentsHttp) CreateComment(c *gin.Context) {
 				"error": err,
 			},
 		)
+		return
 	}
 
 	c.JSON(http.StatusOK,
@@ -65,13 +69,14 @@ func (h *CommentsHttp) UpdateComment(c *gin.Context) {
 	var req request.CommentRequest
 	ctx := c.Request.Context()
 
-	err := c.ShouldBindBodyWithJSON(req)
+	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest,
 			gin.H{
 				"error": "Msg Null",
 			},
 		)
+		return
 	}
 
 	authUser, ok := c.Request.Context().Value("user").(*dto.AuthUserDto)
@@ -81,17 +86,13 @@ func (h *CommentsHttp) UpdateComment(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
 	userId := authUser.UserId
-	postId := c.Param("id")
+	commentId := strings.TrimPrefix(c.Param("comments_id"), ":")
 
-	if req.ReplyId == nil {
-		err = h.uc.UpdateComment(ctx, userId, postId, req.Msg, nil)
-	} else {
-		replyIdStr := req.ReplyId.String()
-		err = h.uc.UpdateComment(ctx, userId, postId, req.Msg, &replyIdStr)
-	}
+	err = h.uc.UpdateComment(ctx, commentId, userId, req.Msg)
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest,
@@ -99,6 +100,7 @@ func (h *CommentsHttp) UpdateComment(c *gin.Context) {
 				"error": err,
 			},
 		)
+		return
 	}
 
 	c.JSON(http.StatusOK,
@@ -112,13 +114,14 @@ func (h *CommentsHttp) ReplyComment(c *gin.Context) {
 	var req request.CommentRequest
 	ctx := c.Request.Context()
 
-	err := c.ShouldBindBodyWithJSON(req)
+	err := c.ShouldBindBodyWithJSON(&req)
 	if err != nil {
 		c.JSON(http.StatusBadRequest,
 			gin.H{
 				"error": "Msg Null",
 			},
 		)
+		return
 	}
 
 	authUser, ok := c.Request.Context().Value("user").(*dto.AuthUserDto)
@@ -128,27 +131,22 @@ func (h *CommentsHttp) ReplyComment(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
 	userId := authUser.UserId
-	postId := c.Param("id")
+	postId := strings.TrimPrefix(c.Param("id"), ":")
+	commentId := strings.TrimPrefix(c.Param("comments_id"), ":")
 
-	if req.ReplyId == nil {
+	err = h.uc.ReplyComment(ctx, commentId, userId, postId, req.Msg)
+	if err != nil {
 		c.JSON(http.StatusBadRequest,
 			gin.H{
-				"error": "reply_id NULL",
+				"error": err,
 			},
 		)
-	} else {
-		replyIdStr := req.ReplyId.String()
-		err = h.uc.ReplyComment(ctx, userId, postId, replyIdStr, req.Msg)
-		if err != nil {
-			c.JSON(http.StatusBadRequest,
-				gin.H{
-					"error": err,
-				},
-			)
-		}
+		return
+
 	}
 
 	c.JSON(http.StatusOK,
@@ -168,9 +166,10 @@ func (h *CommentsHttp) FindAllComment(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
-	postId := c.Param("id")
+	postId := strings.TrimPrefix(c.Param("id"), ":")
 
 	comment, err := h.uc.FindAllComment(ctx, postId)
 	if err != nil {
@@ -179,25 +178,27 @@ func (h *CommentsHttp) FindAllComment(c *gin.Context) {
 				"error": err,
 			},
 		)
+		return
 	}
 
-	if comment == nil || len(*comment) == 0{
+	if comment == nil || len(*comment) == 0 {
 		c.JSON(http.StatusOK,
 			gin.H{
 				"message": "There's No Comment",
-				"data": comment,
+				"data":    comment,
 			},
 		)
+		return
 	}
 
-	for _, i := range *comment{
+	for _, i := range *comment {
 		response := response.CommentResponse{
-			ID: i.ID,
-			UserID: i.UserID,
-			ReplyId: i.ReplyId,
+			ID:        i.ID,
+			UserID:    i.UserID,
+			ReplyId:   i.ReplyId,
 			CreatedAt: i.CreatedAt,
 			UpdatedAt: i.UpdatedAt,
-			Msg: i.Msg,
+			Msg:       i.Msg,
 		}
 		res = append(res, response)
 	}
@@ -214,16 +215,18 @@ func (h *CommentsHttp) DeleteComment(c *gin.Context) {
 				"error": "Unauthorized",
 			},
 		)
+		return
 	}
 
-	commentId := c.Param("comments_id")
+	commentId := strings.TrimPrefix(c.Param("comments_id"), ":")
 	parsedCommentId, err := uuid.Parse(commentId)
-	if err != nil{
+	if err != nil {
 		c.JSON(http.StatusInternalServerError,
 			gin.H{
 				"error": "Error while parsing uuid",
 			},
 		)
+		return
 	}
 
 	err = h.uc.DeleteComment(ctx, parsedCommentId)
@@ -233,9 +236,10 @@ func (h *CommentsHttp) DeleteComment(c *gin.Context) {
 				"error": "Failed to delete comment",
 			},
 		)
+		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message" : "SUCCESS",
+		"message": "SUCCESS",
 	})
 }

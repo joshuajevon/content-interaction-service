@@ -6,6 +6,7 @@ import (
 	"bootcamp-content-interaction-service/infrastructures"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,19 +26,19 @@ func (repo *CommentsRepository) CreateComment(ctx context.Context, userId, postI
 
 	uId, err := uuid.Parse(userId)
 	if err != nil {
-		return err
+		return errors.New("failed parsing userId")
 	}
 
 	pId, err := uuid.Parse(postId)
 	if err != nil {
-		return err
+		return errors.New("failed parsing postId")
 	}
 
 	var rId *uuid.UUID
-	if replyId != nil{
+	if replyId != nil {
 		parsed, err := uuid.Parse(*replyId)
 		if err != nil {
-			return err
+			return errors.New("failed parsing replyId")
 		}
 		rId = &parsed
 	}
@@ -54,51 +55,57 @@ func (repo *CommentsRepository) CreateComment(ctx context.Context, userId, postI
 
 	err = repo.db.GetInstance().WithContext(ctx).Create(&comment).Error
 	if err != nil {
-		return err
+		return errors.New("failed to create comment")
 	}
 
 	return nil
 }
 
-func (repo *CommentsRepository) UpdateComment(ctx context.Context, userId, postId, msg string, replyId *string) error {
+func (repo *CommentsRepository) UpdateComment(ctx context.Context, id, userId, msg string) error {
 	var comment entities.Comments
 
 	err := repo.db.GetInstance().WithContext(ctx).
 		Unscoped().
-		Where("user_id=? AND post_id=? AND reply_id=?", userId, postId, replyId).
+		Where("id=?", id).
 		First(&comment).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
+		return errors.New("record not found")
+	} else if err != nil {
 		return err
 	}
 
-	err = repo.db.GetInstance().WithContext(ctx).Model(&comment).
+	if fmt.Sprintf("%v", comment.UserID) != userId {
+		return errors.New("authorization : you cannot update other comment")
+	}
+
+	err = repo.db.GetInstance().WithContext(ctx).Model(&comment).Unscoped().
 		Updates(map[string]interface{}{
-			"UpdatedAt": time.Now(),
-			"Msg":       msg,
+			"updated_at": time.Now(),
+			"msg":        msg,
 		}).Error
 
 	if err != nil {
-		return err
+		return errors.New("failed to update comment")
 	}
 
 	return nil
 }
 
-func (repo *CommentsRepository) ReplyComment(ctx context.Context, userId, postId, replyId, msg string) error {
+func (repo *CommentsRepository) ReplyComment(ctx context.Context, id, userId, postId, msg string) error {
 	var comment entities.Comments
 
 	err := repo.db.GetInstance().WithContext(ctx).
 		Unscoped().
-		Where("user_id=? AND post_id=? AND reply_id=?", userId, postId, replyId).
+		Where("id=?", id).
 		First(&comment).Error
 
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return err
+		return errors.New("the comment_id that you reply doesn't exist")
 	}
 
-	err = repo.CreateComment(ctx, userId, postId, msg, &replyId)
-	if err != nil{
+	err = repo.CreateComment(ctx, userId, postId, msg, &id)
+	if err != nil {
 		return err
 	}
 
@@ -111,10 +118,12 @@ func (repo *CommentsRepository) FindAllComment(ctx context.Context, postId strin
 	err := repo.db.GetInstance().WithContext(ctx).
 		Unscoped().
 		Where("post_id=?", postId).
-		First(&comment).Error
+		Find(&comment).Error
 
-	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, err
+	if len(*comment) == 0 {
+		return nil, errors.New("there's no comment")
+	} else if err != nil {
+		return nil, errors.New("post not found")
 	}
 
 	return comment, nil
@@ -137,36 +146,36 @@ func (repo *CommentsRepository) getAllReplyIDs(ctx context.Context, parentID uui
 			Pluck("id", &children).Error
 
 		if err != nil {
-			return nil, err
+			return nil, errors.New("failed to get reply data")
 		}
 
 		allReplies = append(allReplies, children...)
-		queue = append(queue, children...) 
+		queue = append(queue, children...)
 	}
 
 	return allReplies, nil
 }
 
-func (repo *CommentsRepository) DeleteComment(ctx context.Context, id uuid.UUID) (error) {
+func (repo *CommentsRepository) DeleteComment(ctx context.Context, id uuid.UUID) error {
 	allReplies, err := repo.getAllReplyIDs(ctx, id)
-	if err != nil{
-		return nil
+	if err != nil {
+		return err
 	}
 
-	for len(allReplies) > 0{
+	if len(allReplies) > 0{
 		err = repo.db.GetInstance().WithContext(ctx).
 			Where("id IN ?", allReplies).
 			Delete(&entities.Comments{}).Error
-		if err != nil{
-			return err
+		if err != nil {
+			return errors.New("failed to delete comment data : reply_id")
 		}
 	}
 
 	err = repo.db.GetInstance().WithContext(ctx).
 		Where("id=?", id).Delete(&entities.Comments{}).Error
-	if err != nil{
-		return err
+	if err != nil {
+		return errors.New("failed to delete comment data : mother_id")
 	}
-	
+
 	return nil
 }
