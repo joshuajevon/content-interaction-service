@@ -4,25 +4,30 @@ import (
 	"bootcamp-content-interaction-service/domains/posts"
 	"bootcamp-content-interaction-service/domains/posts/entities"
 	"bootcamp-content-interaction-service/infrastructures"
+	"bootcamp-content-interaction-service/shared/util"
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
+
 	"github.com/google/uuid"
-	"github.com/redis/go-redis/v9"
 	"github.com/lib/pq"
+	"github.com/redis/go-redis/v9"
 	"go.uber.org/zap"
 )
 
 type PostRepository struct {
 	db infrastructures.Database
 	redisCache *redis.Client
+    logger util.Logger
 }
 
-func NewPostRepository(db infrastructures.Database, redisClient *redis.Client) posts.PostRepository {
+func NewPostRepository(db infrastructures.Database, redisClient *redis.Client, logger util.Logger) posts.PostRepository {
 	return PostRepository{
 		db: db,
 		redisCache: redisClient,
+        logger: logger,
 	}
 }
 
@@ -213,6 +218,37 @@ func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*ent
 
 func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]*entities.Post, error) {
 	var posts []*entities.Post
+	cacheKey := "posts:user_ids:" + strings.Join(userIds, ",")
+
+	p.logger.Info("Looking up posts by user IDs",
+		zap.Strings("user_ids", userIds),
+		zap.String("cache_key", cacheKey),
+	)
+
+	cached, err := p.redisCache.Get(ctx, cacheKey).Result()
+	if err == nil {
+		if err := json.Unmarshal([]byte(cached), &posts); err == nil {
+			p.logger.Info("Cache hit - returning posts from Redis",
+				zap.String("cache_key", cacheKey),
+				zap.Int("post_count", len(posts)),
+			)
+			return posts, nil
+		} else {
+			p.logger.Error("Failed to unmarshal posts from Redis cache",
+				zap.Error(err),
+				zap.String("cache_key", cacheKey),
+			)
+		}
+	} else if err != redis.Nil {
+		p.logger.Error("Redis GET operation failed",
+			zap.Error(err),
+			zap.String("cache_key", cacheKey),
+		)
+	} else {
+		p.logger.Info("Cache miss - querying database",
+			zap.String("cache_key", cacheKey),
+		)
+	}
 
 	result := p.db.GetInstance().
 		WithContext(ctx).
@@ -221,8 +257,38 @@ func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]
 		Find(&posts)
 
 	if result.Error != nil {
+		p.logger.Error("Database query failed while fetching posts by user IDs",
+			zap.Error(result.Error),
+			zap.Strings("user_ids", userIds),
+		)
 		return nil, result.Error
 	}
-	
+
+	p.logger.Info("Fetched posts from database",
+		zap.Int("post_count", len(posts)),
+		zap.Strings("user_ids", userIds),
+	)
+
+	bytes, err := json.Marshal(posts)
+	if err != nil {
+		p.logger.Error("Failed to marshal posts for caching",
+			zap.Error(err),
+			zap.Strings("user_ids", userIds),
+		)
+	} else {
+		err := p.redisCache.Set(ctx, cacheKey, bytes, 30*time.Minute).Err()
+		if err != nil {
+			p.logger.Error("Failed to set posts in Redis cache",
+				zap.Error(err),
+				zap.String("cache_key", cacheKey),
+			)
+		} else {
+			p.logger.Info("Cached posts in Redis",
+				zap.String("cache_key", cacheKey),
+				zap.Int("post_count", len(posts)),
+			)
+		}
+	}
+
 	return posts, nil
 }

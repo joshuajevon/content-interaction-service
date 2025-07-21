@@ -19,7 +19,7 @@ func NewUserGraphHTTP(baseURL string) UserGraphService {
 }
 
 func (g *userGraphHTTP) GetFollowings(userID string) ([]string, error) {
-	url := fmt.Sprintf("%s/relations/%s/followings", g.BaseURL,userID)
+	url := fmt.Sprintf("%s/api/v1/relations/%s/followings", g.BaseURL,userID)
 
 	resp, err := http.Get(url)
 	if err != nil {
