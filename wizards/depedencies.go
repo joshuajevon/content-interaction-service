@@ -38,7 +38,7 @@ var (
     PostUseCase         = postUc.NewPostUseCase(PostRepository, UserGraphService, NotificationRepository)
 	PostHttp            = postHttp.NewPostHttp(PostUseCase)
 
-	NotificationRepository 	= notificationRepo.NewNotificationRepository(PostgresDatabase, RedisClient)
+	NotificationRepository 	= notificationRepo.NewNotificationRepository(PostgresDatabase, RedisClient, LoggerInstance)
 	NotificationUseCase  	= notificationUc.NewNotificationUseCase(NotificationRepository)
 	NotificationHttp		= notificationHttp.NewNotificationHttp(NotificationUseCase)
 )

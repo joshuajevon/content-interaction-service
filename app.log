@@ -12,3 +12,23 @@
 {"level":"info","ts":"2025-07-21T13:12:23.926+0700","caller":"util/logger.go:49","msg":"Cache miss - querying database","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
 {"level":"info","ts":"2025-07-21T13:12:23.992+0700","caller":"util/logger.go:49","msg":"Fetched posts from database","post_count":2,"user_ids":["22222222-2222-2222-2222-222222222222"]}
 {"level":"info","ts":"2025-07-21T13:12:23.993+0700","caller":"util/logger.go:49","msg":"Cached posts in Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}
+{"level":"info","ts":"2025-07-21T14:43:07.071+0700","caller":"util/logger.go:49","msg":"Looking up posts by user IDs","user_ids":["22222222-2222-2222-2222-222222222222"],"cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T14:43:07.072+0700","caller":"util/logger.go:49","msg":"Cache miss - querying database","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T14:43:07.256+0700","caller":"util/logger.go:49","msg":"Fetched posts from database","post_count":2,"user_ids":["22222222-2222-2222-2222-222222222222"]}
+{"level":"info","ts":"2025-07-21T14:43:07.257+0700","caller":"util/logger.go:49","msg":"Cached posts in Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}
+{"level":"info","ts":"2025-07-21T14:58:28.195+0700","caller":"util/logger.go:49","msg":"Set in cache","post_key":"62bf1b2b-d4a9-4c36-9f27-09a5cf167248"}
+{"level":"info","ts":"2025-07-21T14:58:28.196+0700","caller":"util/logger.go:49","msg":"Set in cache","user_posts_key":"62bf1b2b-d4a9-4c36-9f27-09a5cf167248"}
+{"level":"info","ts":"2025-07-21T14:58:28.197+0700","caller":"util/logger.go:49","msg":"Set in cache cache with key feed_posts"}
+{"level":"info","ts":"2025-07-21T15:10:30.153+0700","caller":"util/logger.go:49","msg":"Set in cache","post_key":"f3ea5edc-f98c-45c1-9222-c278278893c5"}
+{"level":"info","ts":"2025-07-21T15:10:30.156+0700","caller":"util/logger.go:49","msg":"Set in cache","user_posts_key":"f3ea5edc-f98c-45c1-9222-c278278893c5"}
+{"level":"info","ts":"2025-07-21T15:10:30.161+0700","caller":"util/logger.go:49","msg":"Set in cache cache with key feed_posts"}
+{"level":"info","ts":"2025-07-21T15:10:30.669+0700","caller":"util/logger.go:49","msg":"Notification saved to DB","notification_id":"999cb4e7-b86d-4925-8a60-6efd9a0eaa48","recipient_id":"0d6a34e5-659d-40ab-b28d-040f7dccfcff"}
+{"level":"info","ts":"2025-07-21T15:10:30.670+0700","caller":"util/logger.go:49","msg":"Notification stored in Redis","redis_key":"post_notifications:0d6a34e5-659d-40ab-b28d-040f7dccfcff","recipient_id":"0d6a34e5-659d-40ab-b28d-040f7dccfcff"}
+{"level":"info","ts":"2025-07-21T15:12:56.912+0700","caller":"util/logger.go:49","msg":"Set in cache","post_key":"82c2b8c3-0e0e-40f5-98c7-f7b299370cb6"}
+{"level":"info","ts":"2025-07-21T15:12:56.914+0700","caller":"util/logger.go:49","msg":"Set in cache","user_posts_key":"82c2b8c3-0e0e-40f5-98c7-f7b299370cb6"}
+{"level":"info","ts":"2025-07-21T15:12:56.916+0700","caller":"util/logger.go:49","msg":"Set in cache cache with key feed_posts"}
+{"level":"info","ts":"2025-07-21T15:17:20.904+0700","caller":"util/logger.go:49","msg":"Set in cache","post_key":"e031d757-f853-498a-a013-59cc3aed1688"}
+{"level":"info","ts":"2025-07-21T15:17:20.904+0700","caller":"util/logger.go:49","msg":"Set in cache","user_posts_key":"e031d757-f853-498a-a013-59cc3aed1688"}
+{"level":"info","ts":"2025-07-21T15:17:20.907+0700","caller":"util/logger.go:49","msg":"Set in cache cache with key feed_posts"}
+{"level":"info","ts":"2025-07-21T15:17:21.110+0700","caller":"util/logger.go:49","msg":"Notification saved to DB","notification_id":"a2aef792-c90e-4d7e-9eae-93dd84f8abf9","recipient_id":"0d6a34e5-659d-40ab-b28d-040f7dccfcff"}
+{"level":"info","ts":"2025-07-21T15:17:21.111+0700","caller":"util/logger.go:49","msg":"Notification stored in Redis","redis_key":"post_notifications:0d6a34e5-659d-40ab-b28d-040f7dccfcff","recipient_id":"0d6a34e5-659d-40ab-b28d-040f7dccfcff"}

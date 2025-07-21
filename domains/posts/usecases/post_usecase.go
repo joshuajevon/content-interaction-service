@@ -200,7 +200,8 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 		return nil, err
 	}
 
-	followers, err := p.followerRepository.GetFollowers(ctx, postObject.UserID)
+	followers, err := p.userGraphService.GetFollowers(postObject.UserID.String())
+
 	if err != nil {
 		return &responses.PostResponse{
 			ID:        savedPost.ID,
@@ -215,7 +216,7 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 	for _, follower := range followers {
 		notif := &notification.Notification{
 			SourceUserID: postObject.UserID,
-			RecipientID:  follower.ID,
+			RecipientID:  uuid.MustParse(follower),
 			PostID:       savedPost.ID,
 			Type:         "NEW_POST",
 			Content:      savedPost.Caption,
@@ -226,7 +227,6 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 			continue
 		}
 	}
-
 
 	return &responses.PostResponse{
 		ID:        savedPost.ID,
