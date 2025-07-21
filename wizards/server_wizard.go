@@ -31,5 +31,10 @@ func RegisterServer(router *gin.Engine) {
 			post.DELETE("/delete/:id", PostHttp.DeletePost)
 			post.PATCH("/update/:id", PostHttp.UpdatePost)
 		}
+
+		notification := api.Group("/notification")
+		{
+			notification.POST("/post", NotificationHttp.CreatePostNotification)
+		}
 	}
 }

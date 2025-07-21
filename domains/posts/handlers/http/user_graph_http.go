@@ -12,6 +12,7 @@ type userGraphHTTP struct {
 
 type UserGraphService interface {
 	GetFollowings(userID string) ([]string, error)
+	GetFollowers(userID string) ([]string, error)
 }
 
 func NewUserGraphHTTP(baseURL string) UserGraphService {
@@ -45,3 +46,29 @@ func (g *userGraphHTTP) GetFollowings(userID string) ([]string, error) {
 	return followingIDs, nil
 }
 
+func (g *userGraphHTTP) GetFollowers(userID string) ([]string, error) {
+	url := fmt.Sprintf("%s/api/v1/relations/%s/followers", g.BaseURL, userID)
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	var result struct {
+		Followers []struct {
+			FollowerID string `json:"follower_id"`
+		} `json:"followers"`
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, err
+	}
+
+	var followerIDs []string
+	for _, f := range result.Followers {
+		followerIDs = append(followerIDs, f.FollowerID)
+	}
+
+	return followerIDs, nil
+}
