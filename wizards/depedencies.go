@@ -11,7 +11,8 @@ import (
 var (
 	Config             = config.GetConfig()
 	PostgresDatabase   = infrastructures.NewPostgresDatabase(Config)
-	PostRepository = postRepo.NewPostRepository(PostgresDatabase)
+	RedisClient 	   = infrastructures.InitRedis()
+	PostRepository = postRepo.NewPostRepository(PostgresDatabase, RedisClient)
 	PostUseCase = postUc.NewPostUseCase(PostRepository)
 	PostHttp = postHttp.NewPostHttp(PostUseCase)
 )
