@@ -11,6 +11,9 @@ import (
 	postHttp "bootcamp-content-interaction-service/domains/posts/handlers/http"
 	postRepo "bootcamp-content-interaction-service/domains/posts/repositories"
 	postUc "bootcamp-content-interaction-service/domains/posts/usecases"
+	notificationHttp "bootcamp-content-interaction-service/domains/notifications/handlers/http"
+	notificationRepo "bootcamp-content-interaction-service/domains/notifications/repositories"
+	notificationUc "bootcamp-content-interaction-service/domains/notifications/usecases"
 	"bootcamp-content-interaction-service/infrastructures"
 	"bootcamp-content-interaction-service/shared/util"
 )
@@ -34,4 +37,8 @@ var (
 	PostRepository      = postRepo.NewPostRepository(PostgresDatabase, RedisClient, LoggerInstance)
     PostUseCase         = postUc.NewPostUseCase(PostRepository, UserGraphService)
 	PostHttp            = postHttp.NewPostHttp(PostUseCase)
+
+	NotificationRepository 	= notificationRepo.NewNotificationRepository(PostgresDatabase, RedisClient)
+	NotificationUseCase  	= notificationUc.NewNotificationUseCase(NotificationRepository)
+	NotificationHttp		= notificationHttp.NewNotificationHttp(NotificationUseCase)
 )
