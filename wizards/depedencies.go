@@ -17,9 +17,9 @@ import (
 var (
 	Config              = config.GetConfig()
 	PostgresDatabase    = infrastructures.NewPostgresDatabase(Config)
-	RedisClient 	      = infrastructures.InitRedis()
+	RedisClient 	    = infrastructures.InitRedis()
 	
-	UserGraphService = postHttp.NewUserGraphHTTP(Config.UserGraphBaseURL)
+	UserGraphService    = postHttp.NewUserGraphHTTP(Config.UserGraphBaseURL)
 
 	LikesRepository     = likesRepository.NewLikesRepository(PostgresDatabase)
 	LikesUseCase        = likesUc.NewLikesUseCase(LikesRepository)
@@ -30,6 +30,6 @@ var (
 	CommentsHttp        = commentsHttp.NewLikesHandler(CommentsUseCase)
 
 	PostRepository      = postRepo.NewPostRepository(PostgresDatabase, RedisClient)
-  PostUseCase         = postUc.NewPostUseCase(PostRepository, UserGraphService)
+    PostUseCase         = postUc.NewPostUseCase(PostRepository, UserGraphService)
 	PostHttp            = postHttp.NewPostHttp(PostUseCase)
 )
