@@ -12,8 +12,13 @@
 ## 📦 Features
 
 ✅ Posts Management
+
 ✅ Likes and Dislikes
+
 ✅ Comments Management
+
 ✅ Timeline Generation
+
 ✅ Connected to redis cache for memory storage
+
 ✅ Clean architecture (repositories, usecases, HTTP handlers)
