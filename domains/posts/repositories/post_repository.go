@@ -210,3 +210,19 @@ func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*ent
 
     return postModel, nil
 }
+
+func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]*entities.Post, error) {
+	var posts []*entities.Post
+
+	result := p.db.GetInstance().
+		WithContext(ctx).
+		Where("user_id IN ?", userIds).
+		Order("created_at DESC").
+		Find(&posts)
+
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	
+	return posts, nil
+}

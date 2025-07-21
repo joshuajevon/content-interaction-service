@@ -11,6 +11,7 @@ type (
 	Config struct {
 		Db     *Database
 		Server *Server
+		UserGraphBaseURL string
 	}
 
 	Database struct {
@@ -25,6 +26,7 @@ type (
 
 	Server struct {
 		Port int
+		UserGraphBaseURL string
 	}
 )
 

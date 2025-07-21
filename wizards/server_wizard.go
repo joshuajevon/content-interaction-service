@@ -1,8 +1,6 @@
 package wizards
 
 import (
-	"bootcamp-content-interaction-service/shared/middlewares"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +12,7 @@ func RegisterServer(router *gin.Engine) {
     {
       post.GET("/view", PostHttp.ViewAllPost)
 			post.GET("/view/:id", PostHttp.ViewPostById)
+			post.GET("/view/feed/:id", PostHttp.ViewPersonalFeed)
       
       post.Use(middlewares.AuthMiddleware())
       post.POST("/:id/likes", LikesHttp.LikePost)

@@ -3,6 +3,7 @@ package usecases
 import (
 	"bootcamp-content-interaction-service/domains/posts"
 	"bootcamp-content-interaction-service/domains/posts/entities"
+	"bootcamp-content-interaction-service/domains/posts/handlers/http"
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/domains/posts/models/responses"
 	sharedResponse "bootcamp-content-interaction-service/shared/models/responses"
@@ -18,11 +19,13 @@ import (
 
 type PostUseCase struct {
 	postRepository posts.PostRepository
+	userGraphService http.UserGraphService
 }
 
-func NewPostUseCase(postRepo posts.PostRepository) posts.PostUseCase {
+func NewPostUseCase(postRepo posts.PostRepository, userGraph http.UserGraphService) posts.PostUseCase {
     return PostUseCase{
         postRepository: postRepo,
+		userGraphService: userGraph,
 	}
 }
 
@@ -201,4 +204,32 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 		Tags:      savedPost.Tags,
 		CreatedAt: savedPost.CreatedAt,
 	}, nil
+}
+
+func (p PostUseCase) ViewPostByUserId(ctx context.Context, userId string) ([]*responses.PostResponse, error) {
+	followingIDs, err := p.userGraphService.GetFollowings(userId)
+	if err != nil {
+		return nil, err
+	}
+
+	posts, err := p.postRepository.FindByUserIDs(ctx, followingIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	var responseList []*responses.PostResponse
+	for _, post := range posts {
+		response := &responses.PostResponse{
+			ID:        post.ID,
+			UserID:    post.UserID,
+			ImageURLs: post.ImageURLs,
+			Caption:   post.Caption,
+			Tags:      post.Tags,
+			CreatedAt: post.CreatedAt,
+			UpdatedAt: post.UpdatedAt,
+		}
+		responseList = append(responseList, response)
+	}
+
+	return responseList, nil
 }

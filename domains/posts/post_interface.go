@@ -15,6 +15,7 @@ type PostUseCase interface {
 	ViewPostById(ctx context.Context, id string) (*responses.PostResponse, error)
 	DeletePost(ctx context.Context, id string) (*sharedResponse.BasicResponse, error)
 	UpdatePost(ctx context.Context, postId string, request *requests.UpdatePostRequest) (*responses.PostResponse, error)
+	ViewPostByUserId(ctx context.Context, userId string) ([]*responses.PostResponse, error)
 }
 
 type PostRepository interface {
@@ -24,4 +25,5 @@ type PostRepository interface {
 	FindById(ctx context.Context, id string) (*entities.Post, error)
 	DeletePost(ctx context.Context, id string) (error)
 	UpdatePost(ctx context.Context, post *entities.Post) (*entities.Post, error)
+	FindByUserIDs(ctx context.Context, userIds []string) ([]*entities.Post, error)
 }
