@@ -1,0 +1,14 @@
+{"level":"info","ts":"2025-07-21T13:05:44.451+0700","caller":"util/logger.go:49","msg":"Looking up posts by user IDs","user_ids":["22222222-2222-2222-2222-222222222222"],"cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:05:44.453+0700","caller":"util/logger.go:49","msg":"Cache miss - querying database","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:05:44.512+0700","caller":"util/logger.go:49","msg":"Fetched posts from database","post_count":2,"user_ids":["22222222-2222-2222-2222-222222222222"]}
+{"level":"info","ts":"2025-07-21T13:05:44.513+0700","caller":"util/logger.go:49","msg":"Cached posts in Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}
+{"level":"info","ts":"2025-07-21T13:08:46.625+0700","caller":"util/logger.go:49","msg":"Looking up posts by user IDs","user_ids":["22222222-2222-2222-2222-222222222222"],"cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:08:46.626+0700","caller":"util/logger.go:49","msg":"Cache hit - returning posts from Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}
+{"level":"info","ts":"2025-07-21T13:09:18.950+0700","caller":"util/logger.go:49","msg":"Looking up posts by user IDs","user_ids":["22222222-2222-2222-2222-222222222222"],"cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:09:18.950+0700","caller":"util/logger.go:49","msg":"Cache hit - returning posts from Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}
+{"level":"info","ts":"2025-07-21T13:10:02.062+0700","caller":"util/logger.go:49","msg":"Looking up posts by user IDs","user_ids":["22222222-2222-2222-2222-222222222222"],"cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:10:02.063+0700","caller":"util/logger.go:49","msg":"Cache hit - returning posts from Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}
+{"level":"info","ts":"2025-07-21T13:12:23.924+0700","caller":"util/logger.go:49","msg":"Looking up posts by user IDs","user_ids":["22222222-2222-2222-2222-222222222222"],"cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:12:23.926+0700","caller":"util/logger.go:49","msg":"Cache miss - querying database","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222"}
+{"level":"info","ts":"2025-07-21T13:12:23.992+0700","caller":"util/logger.go:49","msg":"Fetched posts from database","post_count":2,"user_ids":["22222222-2222-2222-2222-222222222222"]}
+{"level":"info","ts":"2025-07-21T13:12:23.993+0700","caller":"util/logger.go:49","msg":"Cached posts in Redis","cache_key":"posts:user_ids:22222222-2222-2222-2222-222222222222","post_count":2}

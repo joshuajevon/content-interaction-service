@@ -185,5 +185,5 @@ func (handler *PostHttp) ViewPersonalFeed(c * gin.Context) {
         return
     }
 
-    c.JSON(http.StatusOK, result)
+    c.JSON(http.StatusOK, responses.BasicResponse{Data:result})
 }
