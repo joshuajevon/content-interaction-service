@@ -1,6 +1,7 @@
 package entities
 
 import (
+	"bootcamp-content-interaction-service/domains/posts/entities"
 	"time"
 
 	"github.com/google/uuid"
@@ -8,9 +9,10 @@ import (
 )
 
 type Likes struct {
-	UserID    uuid.UUID      `json:"user_id" gorm:"type:uuid;primaryKey"`
-	PostId    uuid.UUID      `json:"post_id" gorm:"type:uuid;primaryKey"`
-	CreatedAt time.Time      `json:"created_at" gorm:"type:timestamp"`
-	UpdatedAt time.Time      `json:"updated_at" gorm:"type:timestamp"`
-	DeletedAt gorm.DeletedAt `json:"deleted_at" gorm:"index"`
+	UserID    uuid.UUID      `gorm:"type:uuid;primaryKey"`
+	PostId    uuid.UUID      `gorm:"type:uuid;not null"`
+	Post      entities.Post  `gorm:"foreignKey:PostId;constraint:OnDelete:CASCADE"`
+	CreatedAt time.Time      `gorm:"type:timestamp"`
+	UpdatedAt time.Time      `gorm:"type:timestamp"`
+	DeletedAt gorm.DeletedAt `gorm:"index"`
 }
