@@ -29,13 +29,14 @@ func (n NotificationRepository) SaveNotification(ctx context.Context, notif *ent
 	var logger = zap.NewExample()
 
 	notifmodel := &entities.Notification{
-		ID: uuid.New(),
+		ID:          uuid.New(),
 		SourceUserID: notif.SourceUserID,
-		RecipientID: notif.RecipientID,
-		PostID: notif.PostID,
-		Type: notif.Type,
-		Content: notif.Content,
-		CreatedAt: time.Now(),
+		RecipientID:  notif.RecipientID,
+		PostID:       notif.PostID,
+		Type:         notif.Type,
+		Content:      notif.Content,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	result := n.db.GetInstance().WithContext(ctx).Create(notifmodel)
@@ -43,18 +44,27 @@ func (n NotificationRepository) SaveNotification(ctx context.Context, notif *ent
 		return nil, result.Error
 	}
 
-	logger.Info("Saving notification to DB with id: " + notif.ID.String())
+	logger.Info("Notification saved to DB",
+		zap.String("notification_id", notifmodel.ID.String()),
+		zap.String("recipient_id", notifmodel.RecipientID.String()),
+	)
 
+	inboxKey := "post_notifications:" + notifmodel.RecipientID.String()
 	notifJSON, err := json.Marshal(notifmodel)
 	if err != nil {
-        logger.Warn("Redis marshal failed:" + err.Error())
-        return notifmodel, nil
-    }
+		logger.Warn("Redis marshal failed", zap.Error(err))
+		return notifmodel, nil
+	}
 
-	if err := n.redisClient.Publish(ctx, "post_notifications", notifJSON).Err(); err != nil {
-        logger.Warn("Redis publish failed", zap.Error(err))
-    } else {
-        logger.Info("Notification published", zap.String("recipient", notif.RecipientID.String()))
-    }
+	if err := n.redisClient.LPush(ctx, inboxKey, notifJSON).Err(); err != nil {
+		logger.Warn("Redis LPUSH failed", zap.Error(err))
+	} else {
+		_ = n.redisClient.Expire(ctx, inboxKey, 7*24*time.Hour).Err()
+		logger.Info("Notification stored in Redis",
+			zap.String("redis_key", inboxKey),
+			zap.String("recipient_id", notifmodel.RecipientID.String()),
+		)
+	}
+
 	return notifmodel, nil
 }

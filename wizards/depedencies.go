@@ -22,7 +22,7 @@ var (
 	Config              = config.GetConfig()
 	PostgresDatabase    = infrastructures.NewPostgresDatabase(Config)
 	RedisClient 	    = infrastructures.InitRedis()
-	LoggerInstance, _ = util.NewLogger()
+	LoggerInstance, _ 	= util.NewLogger()
 	
 	UserGraphService    = postHttp.NewUserGraphHTTP(Config.Server.UserGraphBaseURL)
 
@@ -35,7 +35,7 @@ var (
 	CommentsHttp        = commentsHttp.NewLikesHandler(CommentsUseCase)
 
 	PostRepository      = postRepo.NewPostRepository(PostgresDatabase, RedisClient, LoggerInstance)
-    PostUseCase         = postUc.NewPostUseCase(PostRepository, UserGraphService)
+    PostUseCase         = postUc.NewPostUseCase(PostRepository, UserGraphService, NotificationRepository)
 	PostHttp            = postHttp.NewPostHttp(PostUseCase)
 
 	NotificationRepository 	= notificationRepo.NewNotificationRepository(PostgresDatabase, RedisClient)
