@@ -30,7 +30,7 @@ var (
 	LikesUseCase        = likesUc.NewLikesUseCase(LikesRepository)
 	LikesHttp           = likesHttp.NewLikesHandler(LikesUseCase)
 
-	CommentsRepository  = commentsRepository.NewCommentsRepository(PostgresDatabase)
+	CommentsRepository  = commentsRepository.NewCommentsRepository(PostgresDatabase, RedisClient, LoggerInstance)
 	CommentsUseCase     = commentsUc.NewCommentsUseCase(CommentsRepository)
 	CommentsHttp        = commentsHttp.NewLikesHandler(CommentsUseCase)
 
