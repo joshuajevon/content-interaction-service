@@ -22,15 +22,41 @@ func NewNotificationUseCase(notifRepo notifications.NotificationRepository) noti
 	}
 }
 
+func (n NotificationUseCase) FindAllNotification(ctx context.Context) ([]*responses.PostNotificationResponse, error) {
+	user, err := util.GetAuthUser(ctx)
+
+	if err != nil {
+		return nil, err
+	}
+	
+	notifications, err := n.notifRepo.FindAll(ctx, string(user.UserId))
+	if err != nil {
+		return nil, err
+	}
+
+	var responseList []*responses.PostNotificationResponse
+	for _, notification := range notifications {
+		response := &responses.PostNotificationResponse{
+			ID:           notification.ID.String(),
+			SourceUserID: notification.SourceUserID.String(),
+			RecipientID:  notification.RecipientID.String(),
+			PostID:       notification.PostID.String(),
+			Content:      notification.Content,
+		}
+		responseList = append(responseList, response)
+	}
+	return responseList, nil
+}
+
 func (n NotificationUseCase) NotifyNewPost(ctx context.Context, request *requests.PostNotificationRequest) (*responses.PostNotificationResponse, error) {
 	notifObject := &entities.Notification{
 		SourceUserID: uuid.MustParse(request.SourceUserID),
-		RecipientID: uuid.MustParse(request.RecipientID),
-		PostID: uuid.MustParse(request.PostID),
-		Type: util.NOTIF_POST,
-		Content: request.Content,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		RecipientID:  uuid.MustParse(request.RecipientID),
+		PostID:       uuid.MustParse(request.PostID),
+		Type:         util.NOTIF_POST,
+		Content:      request.Content,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	savedPost, err := n.notifRepo.SaveNotification(ctx, notifObject)
@@ -39,10 +65,10 @@ func (n NotificationUseCase) NotifyNewPost(ctx context.Context, request *request
 	}
 
 	return &responses.PostNotificationResponse{
-		ID: savedPost.ID.String(),
+		ID:           savedPost.ID.String(),
 		SourceUserID: savedPost.SourceUserID.String(),
-		RecipientID: savedPost.RecipientID.String(),
-		PostID: savedPost.PostID.String(),
-		Content: savedPost.Content,
+		RecipientID:  savedPost.RecipientID.String(),
+		PostID:       savedPost.PostID.String(),
+		Content:      savedPost.Content,
 	}, nil
 }

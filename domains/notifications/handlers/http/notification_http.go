@@ -20,6 +20,19 @@ func NewNotificationHttp(notifUc notifications.NotificationUseCase) *Notificatio
 	}
 }
 
+func (handler *NotificationHttp) ViewAllNotification(c *gin.Context) {
+	ctx := c.Request.Context()
+
+	result, err := handler.notifUc.FindAllNotification(ctx)
+
+    if err != nil {
+        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, result)
+}
+
 func (handler *NotificationHttp) CreatePostNotification(c *gin.Context) {
 	ctx := c.Request.Context()
 	var req requests.PostNotificationRequest

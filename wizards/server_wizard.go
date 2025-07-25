@@ -35,6 +35,9 @@ func RegisterServer(router *gin.Engine) {
 		notification := api.Group("/notification")
 		{
 			notification.POST("/post", NotificationHttp.CreatePostNotification)
+
+			notification.Use(middlewares.AuthMiddleware())
+			notification.GET("/post", NotificationHttp.ViewAllNotification)
 		}
 	}
 }
