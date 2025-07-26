@@ -238,13 +238,13 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 	}, nil
 }
 
-func (p PostUseCase) ViewPostByUserId(ctx context.Context, userId string) ([]*responses.PostResponse, error) {
+func (p PostUseCase) ViewPostByUserId(ctx context.Context, userId string, limit int, offset int) ([]*responses.PostResponse, error) {
 	followingIDs, err := p.userGraphService.GetFollowings(userId)
 	if err != nil {
 		return nil, err
 	}
 
-	posts, err := p.postRepository.FindByUserIDs(ctx, followingIDs)
+	posts, err := p.postRepository.FindByUserIDs(ctx, followingIDs, limit, offset)
 	if err != nil {
 		return nil, err
 	}
@@ -265,3 +265,4 @@ func (p PostUseCase) ViewPostByUserId(ctx context.Context, userId string) ([]*re
 
 	return responseList, nil
 }
+

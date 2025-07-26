@@ -4,6 +4,7 @@ import (
 	"bootcamp-content-interaction-service/domains/posts"
 	"bootcamp-content-interaction-service/domains/posts/models/requests"
 	"bootcamp-content-interaction-service/shared/models/responses"
+	"strconv"
 
 	// "log"
 	"net/http"
@@ -173,17 +174,32 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
     c.JSON(http.StatusCreated, result)
 }
 
-func (handler *PostHttp) ViewPersonalFeed(c * gin.Context) {
-    ctx := c.Request.Context()
+func (handler *PostHttp) ViewPersonalFeed(c *gin.Context) {
+	ctx := c.Request.Context()
+	userId := c.Param("id")
 
-    userId := c.Param("id")
+	pageStr := c.DefaultQuery("page", "1")
+	limitStr := c.DefaultQuery("limit", "10")
 
-    result, err := handler.postUc.ViewPostByUserId(ctx, userId)
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: "Invalid page parameter"})
+		return
+	}
 
-    if err != nil {
-        c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
-        return
-    }
+	limit, err := strconv.Atoi(limitStr)
+	if err != nil || limit < 1 {
+		c.JSON(http.StatusBadRequest, responses.BasicResponse{Error: "Invalid limit parameter"})
+		return
+	}
 
-    c.JSON(http.StatusOK, responses.BasicResponse{Data:result})
+	offset := (page - 1) * limit
+
+	result, err := handler.postUc.ViewPostByUserId(ctx, userId, limit, offset)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, responses.BasicResponse{Error: err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, responses.BasicResponse{Data: result})
 }
