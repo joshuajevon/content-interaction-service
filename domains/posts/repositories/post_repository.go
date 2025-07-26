@@ -216,13 +216,15 @@ func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*ent
     return postModel, nil
 }
 
-func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]*entities.Post, error) {
+func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string, limit, offset int) ([]*entities.Post, error) {
 	var posts []*entities.Post
-	cacheKey := "posts:user_ids:" + strings.Join(userIds, ",")
+	cacheKey := fmt.Sprintf("posts:user_ids:%s:limit:%d:offset:%d", strings.Join(userIds, ","), limit, offset)
 
-	p.logger.Info("Looking up posts by user IDs",
+	p.logger.Info("Looking up posts by user IDs with pagination",
 		zap.Strings("user_ids", userIds),
 		zap.String("cache_key", cacheKey),
+		zap.Int("limit", limit),
+		zap.Int("offset", offset),
 	)
 
 	cached, err := p.redisCache.Get(ctx, cacheKey).Result()
@@ -234,7 +236,7 @@ func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]
 			)
 			return posts, nil
 		} else {
-			p.logger.Error("Failed to unmarshal posts from Redis cache",
+			p.logger.Error("Failed to unmarshal cached posts",
 				zap.Error(err),
 				zap.String("cache_key", cacheKey),
 			)
@@ -254,36 +256,33 @@ func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]
 		WithContext(ctx).
 		Where("user_id IN ?", userIds).
 		Order("created_at DESC").
+		Limit(limit).
+		Offset(offset).
 		Find(&posts)
 
 	if result.Error != nil {
-		p.logger.Error("Database query failed while fetching posts by user IDs",
+		p.logger.Error("Database query failed",
 			zap.Error(result.Error),
 			zap.Strings("user_ids", userIds),
 		)
 		return nil, result.Error
 	}
 
-	p.logger.Info("Fetched posts from database",
-		zap.Int("post_count", len(posts)),
-		zap.Strings("user_ids", userIds),
-	)
-
 	bytes, err := json.Marshal(posts)
 	if err != nil {
 		p.logger.Error("Failed to marshal posts for caching",
 			zap.Error(err),
-			zap.Strings("user_ids", userIds),
+			zap.String("cache_key", cacheKey),
 		)
 	} else {
-		err := p.redisCache.Set(ctx, cacheKey, bytes, 30*time.Minute).Err()
+		err := p.redisCache.Set(ctx, cacheKey, bytes, 30*time.Second).Err()
 		if err != nil {
-			p.logger.Error("Failed to set posts in Redis cache",
+			p.logger.Error("Failed to set cache",
 				zap.Error(err),
 				zap.String("cache_key", cacheKey),
 			)
 		} else {
-			p.logger.Info("Cached posts in Redis",
+			p.logger.Info("Cached posts",
 				zap.String("cache_key", cacheKey),
 				zap.Int("post_count", len(posts)),
 			)
@@ -292,3 +291,4 @@ func (p PostRepository) FindByUserIDs(ctx context.Context, userIds []string) ([]
 
 	return posts, nil
 }
+
