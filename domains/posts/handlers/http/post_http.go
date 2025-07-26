@@ -6,7 +6,6 @@ import (
 	"bootcamp-content-interaction-service/shared/models/responses"
 	"strconv"
 
-	// "log"
 	"net/http"
 	"os"
 	"time"
@@ -139,7 +138,6 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
         timestamp := time.Now().Format("20060102150405")
         savePath := "storage/post/" + timestamp + "_" + file.Filename
         if err := c.SaveUploadedFile(file, savePath); err != nil {
-            // Roll back any previously saved files
             for _, path := range imagePaths {
                 _ = os.Remove(path)
             }
@@ -153,7 +151,6 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
 
     validate := validator.New()
     if err := validate.StructCtx(ctx, form); err != nil {
-        // Cleanup saved images
         for _, path := range imagePaths {
             _ = os.Remove(path)
         }
@@ -163,7 +160,6 @@ func (handler *PostHttp) CreatePost(c *gin.Context) {
 
     result, err := handler.postUc.CreatePost(ctx, &form)
     if err != nil {
-        // Cleanup saved images
         for _, path := range imagePaths {
             _ = os.Remove(path)
         }

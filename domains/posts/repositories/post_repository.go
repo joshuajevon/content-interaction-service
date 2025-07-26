@@ -37,7 +37,6 @@ func (p PostRepository) UpdatePost(ctx context.Context, post *entities.Post) (*e
         return nil, result.Error
     }
 
-    // update redis
     postJSON, err := json.Marshal(post)
     if err == nil {
         key := "post:" + post.ID.String()
@@ -64,7 +63,6 @@ func (p PostRepository) DeletePost(ctx context.Context, id string) error {
         return fmt.Errorf("no post found with ID: %s", id)
     }
 
-    // delete from redis
     key := "post:" + parsedID.String()
     _ = p.redisCache.Del(ctx, key).Err()
 	p.logger.Info("Delete post from redis",
@@ -77,7 +75,6 @@ func (p PostRepository) FindById(ctx context.Context, id string) (*entities.Post
 	var post entities.Post
     key := "post:" + id
 
-    // get from redis
     cached, err := p.redisCache.Get(ctx, key).Result()
     if err == nil {
 		p.logger.Info("Cache hit - returning posts from redis", 
@@ -88,7 +85,6 @@ func (p PostRepository) FindById(ctx context.Context, id string) (*entities.Post
         }
     }
 
-    // else, get from db
     result := p.db.GetInstance().WithContext(ctx).Where("id = ?", id).First(&post)
 	p.logger.Info("Get from DB",
         zap.String("id", id),
@@ -97,7 +93,6 @@ func (p PostRepository) FindById(ctx context.Context, id string) (*entities.Post
         return nil, result.Error
     }
 
-    // set in redis
     postJSON, _ := json.Marshal(post)
     _ = p.redisCache.Set(ctx, key, postJSON, time.Hour).Err()
 	p.logger.Info("Set post in cache",
@@ -111,7 +106,6 @@ func (p PostRepository) FindAllByUserId(ctx context.Context, userId string) ([]*
     key := "user_posts:" + userId
     var posts []*entities.Post
 
-    // get from redis
     cached, err := p.redisCache.LRange(ctx, key, 0, -1).Result()
     if err == nil && len(cached) > 0 {
 		p.logger.Info("Cache hit - returning posts from redis", 
@@ -126,7 +120,6 @@ func (p PostRepository) FindAllByUserId(ctx context.Context, userId string) ([]*
         return posts, nil
     }
 
-    // else, get from db
     result := p.db.GetInstance().WithContext(ctx).Where("user_id = ?", userId).Order("created_at DESC").Find(&posts)
     p.logger.Info("Get from DB",
         zap.String("user_id", userId),
@@ -135,7 +128,6 @@ func (p PostRepository) FindAllByUserId(ctx context.Context, userId string) ([]*
         return nil, result.Error
     }
 
-    // set in redis
     for _, post := range posts {
         postJSON, _ := json.Marshal(post)
         _ = p.redisCache.LPush(ctx, key, postJSON).Err()
@@ -152,7 +144,6 @@ func (p PostRepository) FindAll(ctx context.Context) ([]*entities.Post, error) {
     key := "feed_posts"
     var posts []*entities.Post
 
-	// get from redis
     cached, err := p.redisCache.LRange(ctx, key, 0, -1).Result()
     if err == nil && len(cached) > 0 {
 		p.logger.Info("Cache hit - returning posts from redis", 
@@ -167,14 +158,12 @@ func (p PostRepository) FindAll(ctx context.Context) ([]*entities.Post, error) {
         return posts, nil
     }
 
-	// else, get from db
     result := p.db.GetInstance().WithContext(ctx).Order("created_at DESC").Find(&posts)
     p.logger.Info("Get all data from DB")
 	if result.Error != nil {
         return nil, result.Error
     }
 
-    // set in redis
     for _, post := range posts {
         postJSON, _ := json.Marshal(post)
         _ = p.redisCache.LPush(ctx, key, postJSON).Err()
@@ -211,13 +200,11 @@ func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*ent
         return postModel, nil
     }
 
-    // Find by id post
     _ = p.redisCache.Set(ctx, "post:"+postModel.ID.String(), postJSON, time.Hour).Err()
     p.logger.Info("Set in cache",
         zap.String("post_key", postModel.ID.String()),
     )
 
-    // FindAllByUserId post
     userFeedKey := "user_posts:" + postModel.UserID.String()
     _ = p.redisCache.LPush(ctx, userFeedKey, postJSON)
     _ = p.redisCache.Expire(ctx, userFeedKey, time.Hour)
@@ -225,7 +212,6 @@ func (p PostRepository) SavePost(ctx context.Context, post *entities.Post) (*ent
         zap.String("user_posts_key", postModel.ID.String()),
     )
 
-    // FindAll post
     feedKey := "feed_posts"
     _ = p.redisCache.LPush(ctx, feedKey, postJSON)
     _ = p.redisCache.LTrim(ctx, feedKey, 0, 99)
