@@ -19,6 +19,8 @@
 
 ✅ Timeline Generation
 
+✅ Post Notification
+
 ✅ Connected to redis cache for memory storage
 
 ✅ Clean architecture (repositories, usecases, HTTP handlers)

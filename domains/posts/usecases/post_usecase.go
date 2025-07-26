@@ -1,6 +1,8 @@
 package usecases
 
 import (
+	"bootcamp-content-interaction-service/domains/notifications"
+	notification "bootcamp-content-interaction-service/domains/notifications/entities"
 	"bootcamp-content-interaction-service/domains/posts"
 	"bootcamp-content-interaction-service/domains/posts/entities"
 	"bootcamp-content-interaction-service/domains/posts/handlers/http"
@@ -20,12 +22,14 @@ import (
 type PostUseCase struct {
 	postRepository posts.PostRepository
 	userGraphService http.UserGraphService
+	notifRepository notifications.NotificationRepository
 }
 
-func NewPostUseCase(postRepo posts.PostRepository, userGraph http.UserGraphService) posts.PostUseCase {
+func NewPostUseCase(postRepo posts.PostRepository, userGraph http.UserGraphService, notifRepository notifications.NotificationRepository) posts.PostUseCase {
     return PostUseCase{
         postRepository: postRepo,
 		userGraphService: userGraph,
+		notifRepository: notifRepository,
 	}
 }
 
@@ -194,6 +198,34 @@ func (p PostUseCase) CreatePost(ctx context.Context, request *requests.CreatePos
 	savedPost, err := p.postRepository.SavePost(ctx, postObject)
 	if err != nil {
 		return nil, err
+	}
+
+	followers, err := p.userGraphService.GetFollowers(postObject.UserID.String())
+
+	if err != nil {
+		return &responses.PostResponse{
+			ID:        savedPost.ID,
+			UserID:    savedPost.UserID,
+			ImageURLs: savedPost.ImageURLs,
+			Caption:   savedPost.Caption,
+			Tags:      savedPost.Tags,
+			CreatedAt: savedPost.CreatedAt,
+		}, nil
+	}
+
+	for _, follower := range followers {
+		notif := &notification.Notification{
+			SourceUserID: postObject.UserID,
+			RecipientID:  uuid.MustParse(follower),
+			PostID:       savedPost.ID,
+			Type:         "NEW_POST",
+			Content:      savedPost.Caption,
+		}
+
+		_, err := p.notifRepository.SaveNotification(ctx, notif)
+		if err != nil {
+			continue
+		}
 	}
 
 	return &responses.PostResponse{
